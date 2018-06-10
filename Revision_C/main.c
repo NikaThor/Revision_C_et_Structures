@@ -8,6 +8,8 @@
 #include <assert.h>
 #include <limits.h>
 #include <basetsd.h>
+#include <ctype.h>
+#include <time.h>
 #include "digits.h"
 
 #define PAUSE \
@@ -85,8 +87,14 @@ struct Tableau {
 };
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+// -------------------------    DATE     ---------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+
+#define str(x) #x
+#define xstr(s) str(s)
+#define STR_LEN_MAX 10
+//  scanf("%" xstr(STR_LEN_MAX) "s", input);
 
 typedef enum {
     JAN = 1, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC
@@ -222,11 +230,18 @@ int analyseSurDate(const Date d1, const Date d2, Bool(*fct)(const Date, const Da
     return nbJours;
 }
 
-bool strToJour(const char *jour, Jour * const j) {
+bool strToJour(const char* jour, Jour* j) {
+
     if (jour && j) {
+        char* day = (char*) jour;
         int nbJour = 7;
+        int i = 0;
+        while (*(day + i)) { // Transformation en minuscule toute la chaine
+            *(day + i) = tolower(*(day + i));
+            i++;
+        }
         for (int i = 0; i < nbJour; i++) {
-            if (strcmp(jour, JOUR[i]) == 0) {
+            if (strcmp(day, JOUR[i]) == 0) {
                 *j = i;
                 return true;
             }
@@ -312,13 +327,42 @@ size_t recherche_Dichotomique(const int* tab, const int TAILLE, const int aCherc
         size_t mid = (first + last) / 2;
         if (*(tab + mid) == aChercher) // c'est trouvé
             return mid;
-        else if (*(tab + mid) < aChercher) // il faut chercher après
-            first = mid + 1;
-        else // il faut chercher avant
-            last = mid;
+        else if (*(tab + mid) < aChercher) // il faut chercher après le milieu
+            first = mid + 1; // first devient le milieu et last garde sa derniere position
+        else // il faut chercher avant le milieu
+            last = mid; // last devient le milieu et first garde sa premiere position
     }
     return -1; // c'est pas trouvé
 }
+// Fonction qui génére un nombre aleatoire entre min et max
+
+int alea(int min, int max) {
+    static bool first = true;
+    if (first) {
+        srand((int) time(NULL));
+        first = !first;
+    }
+    return (rand() % (max - min + 1)) +min;
+}
+
+int* tabAleatoire(const int TAILLE, int min, int max) {
+    if (TAILLE <= 0 || min > max)
+        return NULL;
+
+    // réservation du tableau
+    int* ptr = (int*) calloc(TAILLE, sizeof (int));
+
+    // si réservation réussie
+    if (ptr) {
+        for (int i = 0; i < TAILLE; ++i)
+            *(ptr + i) = alea(min, max);
+    } else {
+        printf("Erreur dans l'allocation de memoire\n");
+        return NULL;
+    }
+
+    return ptr;
+}//----------------------------------------------
 
 void afficher_bis(const int* ptr, size_t taille, const char* message) {
     assert(ptr != NULL);
@@ -332,15 +376,116 @@ void afficher_bis(const int* ptr, size_t taille, const char* message) {
 //------------------------------------------------
 // affichers des matrices quelconques
 
-void afficher(const int* tab, size_t LIGNE, size_t COL) {
+void afficher_Matrice_2D(const int* tab, size_t LIGNE, size_t COL) {
     for (size_t ligne = 0; ligne < LIGNE; ++ligne) {
         for (size_t colonne = 0; colonne < COL; ++colonne)
-            printf("%4d", *(tab + ligne * COL + colonne));
+            printf("%4d", *(tab + ligne * COL + colonne) );
         printf("\n");
     }
 }
 //------------------------------------------------
+// initialiser des matrices 2D
+void initialisation_Matrice_2D_1(int* adr, size_t c, size_t l) {
+    assert(adr);
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < l; j++) {
+            //            Retroune 1 dans le tableau si une des condition est vrai, sinon 0
+            //            Remplit les 4 bordures du tableau de 1 et le reste de 0
+            *adr++ = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+            //            *(adr + i * l + j) = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+            //            adr(i * l + j) = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+        }
+    }
+}
+void initialisation_Matrice_2D_2(int* adr, size_t c, size_t l) {
+    assert(adr);
+    //Tab de pointeur sur les lignes de la matrice
+    int** ad = (int**) calloc(c, sizeof (int*));
+    assert(ad);
+    for (size_t i = 0; i < c; i++) {
+        ad[i] = &adr[i * l];
+
+    }
+    // Remplit les 4 bordures du tableau de 1 et le reste de 0
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < l; j++) {
+            ad[i][j] = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+        }
+    }
+    free(ad);
+}
+// initialiser des matrices 2D Amelioree
+int fct_Retourne_Val(int val) {
+    return val;
+}
+int fct_Val_Fois_2(int val){
+    return (val * 2);
+}
+int fct_Val_oCarre(int val){
+    return (val * val);
+}
+int fct_Val_Fois_X(int val, int x){
+    return (val * x);
+}
+int fct_Val_Plus_X(int val, int x){
+    return (val + x);
+}
+
+bool initialisation_Matrice_2d_Amelioree(int* adr, size_t c, size_t l,
+        int val_Neutre,
+        int(*fct_1)(int),
+        int(*fct_2)(int, int)) {
+    assert(adr);
+    assert(c > 0);
+    assert(l > 0);
+    int** tab = (int**) calloc(c, sizeof (int*));
+    assert(tab);
+    if (fct_1 != NULL) {
+        for (size_t i = 0; i < c; i++) {
+            tab[i] = &adr[i * l];
+            for (size_t j = 0; j < l; j++) {
+                tab[i][j] = fct_1(val_Neutre);
+            }
+        }
+    } else if (fct_2 != NULL) {
+        for (size_t i = 0; i < c; i++) {
+            tab[i] = &adr[i * l];
+            for (size_t j = 0; j < l; j++) {
+                tab[i][j] = fct_2(i, j);
+            }
+        }
+    } else if(val_Neutre > 0){
+        for (size_t i = 0; i < c; i++) {
+            tab[i] = &adr[i * l];
+            for (size_t j = 0; j < l; j++) {
+                // Remplit les 4 bordures du tableau de 1 et le reste de 0
+                tab[i][j] = val_Neutre;
+            }
+        }
+    }else {// Remplit les 4 bordures du tableau de 1 et le reste de 0
+        for (size_t i = 0; i < c; i++) {
+            tab[i] = &adr[i * l];
+            for (size_t j = 0; j < l; j++) {
+                // Remplit les 4 bordures du tableau de 1 et le reste de 0
+                tab[i][j] = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+            }
+        }
+    }
+    free(tab);
+}
+// Depuis C99
 //------------------------------------------------
+
+/*
+void initialisationMatrice_3(int matrice[c][l], size_t c, size_t l) {
+    assert(matrice);
+    for (size_t i = 0; i < c; i++) {
+        for (size_t j = 0; j < l; j++) {
+            matrice[i][j] = i == 0 || i == c - 1 || j == 0 || j == l - 1;
+        }
+    }
+}
+ */
 
 const int* min(const int* tab, size_t LIGNE, size_t COL) {
     // en prenant les adresses
@@ -523,10 +668,12 @@ ushrt getBit(ushrt pos, int n) {
     assert(pos < INT_SIZE);
     return (n >> pos) & 1;
 }
-// -----------------------------------------------------------------------------
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -------------- Les bateaux --------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 
 typedef const char* Nom;
 
@@ -734,16 +881,105 @@ void afficheBateau(const Bateau* b) {
     }
 }
 
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// --------------------------- Les strxxx et memoire ---------------------------
+// -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+
 int main(int argc, char** argv) {
     Bool suite = FALSE;
-    goto BLOC31;
+    goto BLOC34;
 
+BLOC36:
+    // -------------------------------------------------------------------------
+    {
+        printf("\n-------------------------------------------------------------------------\nBLOC n36\n");
+        PAUSE;
+}
+    if (suite == FALSE)
+        goto FIN;
+BLOC35:
+    // -------------------------------------------------------------------------
+    {
+        printf("\n-------------------------------------------------------------------------\nBLOC n35\n");
+        PAUSE;
+}
+    if (suite == FALSE)
+        goto FIN;
+BLOC34:
+    // -------------------------------------------------------------------------
+    {
+        printf("\n-------------------------------------------------------------------------\nBLOC n34\n");
+        PAUSE;
+        int tab[21][21];
+        initialisation_Matrice_2d_Amelioree(tab, 21, 21, NULL, NULL, NULL);
+        afficher_Matrice_2D(tab, 21, 21);}
+    if (suite == FALSE)
+        goto FIN;
+BLOC33:
+#define leType long long
+    // -------------------------------------------------------------------------
+    {
+        printf("\n-------------------------------------------------------------------------\nBLOC n33\n");
+        PAUSE;
+        const int TAILLE = 10000;
+
+        //leType* ld = (leType*)calloc(TAILLE, sizeof(leType*));
+        leType ld[TAILLE];
+
+        printf("Taille du tab           : %d\n", sizeof (ld));
+        printf("Taille du type          : %d\n", sizeof (leType));
+        printf("Taille nb d'elements    : %d\n", (sizeof (ld) / sizeof (leType)));
+
+        for (size_t i = 0; i < TAILLE / 2; i++) {
+            *(ld + i) = ((rand() % (TAILLE + 1)) + min);
+        }
+
+        printf("\nOn remplit tout le tableau\nTaille du tab           : %d\n", sizeof (ld));
+        printf("Taille du type          : %d\n", sizeof (leType));
+        printf("Taille nb d'elements    : %d\n", (sizeof (ld) / sizeof (leType)));
+
+
+        free(ld);
+        //ld = NULL;
+    }
+    if (suite == FALSE)
+        goto FIN;
 BLOC32:
     // -------------------------------------------------------------------------
     {
         printf("\n-------------------------------------------------------------------------\nBLOC n32\n");
         PAUSE;
-}
+
+        printf("Donnez un jour de la semaine en toutes lettres et en minuscules : ");
+        char input[9];
+        scanf("%" xstr(STR_LEN_MAX) "s", input);
+
+        int i = 0;
+        while (input[i]) {
+            input[i] = tolower(input[i]);
+            i++;
+        }
+
+        Jour j = LUNDI;
+        for (; j < 7; ++j) {
+            if (strcmp(input, JOUR[j]) == 0) {
+                break;
+            }
+        }
+
+        for (size_t n = 0; n < 7; ++n) {
+            printf("%s\n", JOUR[ (n + j) % 7]);
+        }
+
+        printf("Donnez un jour de la semaine en toutes lettres et en minuscules : ");
+        scanf("%" xstr(STR_LEN_MAX) "s", input);
+
+        Jour enumJour;
+        bool ok = strToJour(input, &enumJour);
+        printf("\n\n%s\n", JOUR[enumJour]);}
     if (suite == FALSE)
         goto FIN;
 BLOC31:
@@ -763,8 +999,7 @@ BLOC31:
 
         afficherBillet(b1);
         afficherBillet(b2);
-        afficherBillet(b3);
-}
+        afficherBillet(b3);}
     if (suite == FALSE)
         goto FIN;
 BLOC30:
@@ -792,8 +1027,7 @@ BLOC29:
         for (ushrt pos = INT_SIZE - 1; pos != 65535; --pos) {
             printf("%hu ", getBit(pos, SHRT_MAX));
         }
-        Ret_CH;
-}
+        Ret_CH;}
     if (suite == FALSE)
         goto FIN;
 BLOC28:
@@ -1070,9 +1304,9 @@ BLOC23:
         printf("&tab[0][0]   = %p\n", (void*) &tab1[0][0]);
 
         // affichers des matrices quelconques
-        afficher((const int*) tab1, 2, 3);
+        afficher_Matrice_2D((const int*) tab1, 2, 3);
         printf("\n");
-        afficher((const int*) tab2, 3, 4);
+        afficher_Matrice_2D((const int*) tab2, 3, 4);
 
         printf("somme0   = %d\n", somme0((const int*) tab2, 3, 4));
         printf("somme1   = %d\n", somme1((const int*) tab2, 3, 4));
@@ -1608,8 +1842,7 @@ BLOC07:
         printf("\nBLOC 06\n");
 
         const int TAILLE_COLLECT = 3;
-        struct Personne collectionPersonne[TAILLE_COLLECT];
-}
+        struct Personne collectionPersonne[TAILLE_COLLECT];}
     if (suite == FALSE)
         goto FIN;
 BLOC06:
@@ -1633,8 +1866,7 @@ BLOC06:
 
         afficherDate("Date   : ", &maDate);
         afficherDate("Date   : ", &dateLimite);
-        Ret_CH;
-}
+        Ret_CH;}
     if (suite == FALSE)
         goto FIN;
 BLOC05:// Labo 10
