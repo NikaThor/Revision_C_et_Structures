@@ -36,6 +36,12 @@ type type##Max(type a, type b)\
 printf("\nPress la touche\n"); \
     while (getchar() != '\n')
 
+#define str(x) #x
+#define xstr(s) str(s)
+#define STR_LEN_MAX 10
+//  scanf("%" xstr(STR_LEN_MAX) "s", input);
+
+
 typedef unsigned short ushrt;
 
 const unsigned int LIGNE = 5;
@@ -91,10 +97,6 @@ struct Tableau {
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 
-#define str(x) #x
-#define xstr(s) str(s)
-#define STR_LEN_MAX 10
-//  scanf("%" xstr(STR_LEN_MAX) "s", input);
 
 typedef enum {
     JAN = 1, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV, DEC
@@ -373,18 +375,29 @@ void afficher_bis(const int* ptr, size_t taille, const char* message) {
     }
     printf("]\n");
 }
+
+void afficher_str(const char* ptr, size_t taille, const char* message) {
+    assert(ptr != NULL);
+    printf("%s[", message);
+    for (size_t i = 0; i < taille; i++) {
+        if (i > 0) printf("%s", ", ");
+        printf("%s", *(ptr + i));
+    }
+    printf("]\n");
+}
 //------------------------------------------------
 // affichers des matrices quelconques
 
 void afficher_Matrice_2D(const int* tab, size_t LIGNE, size_t COL) {
     for (size_t ligne = 0; ligne < LIGNE; ++ligne) {
         for (size_t colonne = 0; colonne < COL; ++colonne)
-            printf("%4d", *(tab + ligne * COL + colonne) );
+            printf("%4d", *(tab + ligne * COL + colonne));
         printf("\n");
     }
 }
 //------------------------------------------------
 // initialiser des matrices 2D
+
 void initialisation_Matrice_2D_1(int* adr, size_t c, size_t l) {
     assert(adr);
     for (size_t i = 0; i < c; i++) {
@@ -397,6 +410,7 @@ void initialisation_Matrice_2D_1(int* adr, size_t c, size_t l) {
         }
     }
 }
+
 void initialisation_Matrice_2D_2(int* adr, size_t c, size_t l) {
     assert(adr);
     //Tab de pointeur sur les lignes de la matrice
@@ -415,19 +429,24 @@ void initialisation_Matrice_2D_2(int* adr, size_t c, size_t l) {
     free(ad);
 }
 // initialiser des matrices 2D Amelioree
+
 int fct_Retourne_Val(int val) {
     return val;
 }
-int fct_Val_Fois_2(int val){
+
+int fct_Val_Fois_2(int val) {
     return (val * 2);
 }
-int fct_Val_oCarre(int val){
+
+int fct_Val_oCarre(int val) {
     return (val * val);
 }
-int fct_Val_Fois_X(int val, int x){
+
+int fct_Val_Fois_X(int val, int x) {
     return (val * x);
 }
-int fct_Val_Plus_X(int val, int x){
+
+int fct_Val_Plus_X(int val, int x) {
     return (val + x);
 }
 
@@ -454,7 +473,7 @@ bool initialisation_Matrice_2d_Amelioree(int* adr, size_t c, size_t l,
                 tab[i][j] = fct_2(i, j);
             }
         }
-    } else if(val_Neutre > 0){
+    } else if (val_Neutre > 0) {
         for (size_t i = 0; i < c; i++) {
             tab[i] = &adr[i * l];
             for (size_t j = 0; j < l; j++) {
@@ -462,7 +481,7 @@ bool initialisation_Matrice_2d_Amelioree(int* adr, size_t c, size_t l,
                 tab[i][j] = val_Neutre;
             }
         }
-    }else {// Remplit les 4 bordures du tableau de 1 et le reste de 0
+    } else {// Remplit les 4 bordures du tableau de 1 et le reste de 0
         for (size_t i = 0; i < c; i++) {
             tab[i] = &adr[i * l];
             for (size_t j = 0; j < l; j++) {
@@ -881,6 +900,9 @@ void afficheBateau(const Bateau* b) {
     }
 }
 
+
+
+
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -890,14 +912,13 @@ void afficheBateau(const Bateau* b) {
 
 int main(int argc, char** argv) {
     Bool suite = FALSE;
-    goto BLOC34;
+    goto BLOC35;
 
 BLOC36:
     // -------------------------------------------------------------------------
     {
         printf("\n-------------------------------------------------------------------------\nBLOC n36\n");
-        PAUSE;
-}
+        PAUSE;}
     if (suite == FALSE)
         goto FIN;
 BLOC35:
@@ -905,6 +926,14 @@ BLOC35:
     {
         printf("\n-------------------------------------------------------------------------\nBLOC n35\n");
         PAUSE;
+        
+        const char* s = "Questionnaire";
+        int tmp = 0;
+        const char* ptr = s;
+        while(*ptr++)
+            tmp++;
+        printf("TMP : %d\n", tmp);
+
 }
     if (suite == FALSE)
         goto FIN;
@@ -913,9 +942,35 @@ BLOC34:
     {
         printf("\n-------------------------------------------------------------------------\nBLOC n34\n");
         PAUSE;
-        int tab[21][21];
-        initialisation_Matrice_2d_Amelioree(tab, 21, 21, NULL, NULL, NULL);
-        afficher_Matrice_2D(tab, 21, 21);}
+        
+        int input, n;
+        int count = 0;
+        int* numbers = NULL;
+        int* more_numbers = NULL;
+
+        do {
+            printf("Enter an integer value (0 to end): ");
+            scanf("%d", &input);
+            count++;
+
+            more_numbers = (int*) realloc(numbers, count * sizeof (int));
+
+            if (more_numbers != NULL) {
+                numbers = more_numbers;
+                numbers[count - 1] = input;
+            } else {
+                free(numbers);
+                puts("Error (re)allocating memory");
+                exit(1);
+            }
+        } while (input != 0);
+
+        printf("Numbers entered: ");
+        for (n = 0; n < count; n++)
+            printf("%d ", numbers[n]);
+        free(numbers);
+        
+}
     if (suite == FALSE)
         goto FIN;
 BLOC33:
@@ -924,7 +979,7 @@ BLOC33:
     {
         printf("\n-------------------------------------------------------------------------\nBLOC n33\n");
         PAUSE;
-        const int TAILLE = 10000;
+        const int TAILLE = 10;
 
         //leType* ld = (leType*)calloc(TAILLE, sizeof(leType*));
         leType ld[TAILLE];
@@ -934,7 +989,7 @@ BLOC33:
         printf("Taille nb d'elements    : %d\n", (sizeof (ld) / sizeof (leType)));
 
         for (size_t i = 0; i < TAILLE / 2; i++) {
-            *(ld + i) = ((rand() % (TAILLE + 1)) + min);
+            *(ld + i) = 1;
         }
 
         printf("\nOn remplit tout le tableau\nTaille du tab           : %d\n", sizeof (ld));
